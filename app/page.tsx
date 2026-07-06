@@ -306,8 +306,8 @@ function Marketplace({ go, user, data }: any) {
           {filtered.map((a: any) => { const exp = data.users.find((u: any) => u.id === a.expert_id); const diffColors: Record<string,string> = { Beginner: C.grn, Junior: "#06b6d4", Intermediate: C.amb, Advanced: C.red }; const dc = diffColors[a.difficulty] || C.ts; return (
             <Card key={a.id} onClick={() => go("assignment:" + a.id)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}><DTag domain={a.domain} /><span style={{ fontWeight: 700, color: C.tp, fontSize: 16 }}>${a.price}</span></div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: C.tp, margin: "0 0 8px", lineHeight: 1.4 }}>{a.title}</h3>
-              <p style={{ fontSize: 13, color: C.ts, margin: "0 0 12px", lineHeight: 1.5 }}>{a.short_desc}</p>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: C.tp, margin: "0 0 8px", lineHeight: 1.4, wordBreak: "break-word" }}>{a.title}</h3>
+              <p style={{ fontSize: 13, color: C.ts, margin: "0 0 12px", lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>{a.short_desc}</p>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}><Tag color={dc}>{a.difficulty}</Tag><Tag color={C.tm}>~{a.hours}h</Tag><Tag color={C.tm}>{a.role_type}</Tag></div>
               {exp && <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 12, borderTop: `1px solid ${C.bd}` }}><Avi name={exp.name} size={26} /><div><div style={{ fontSize: 12, fontWeight: 600, color: C.tp }}>{exp.name}</div><div style={{ fontSize: 11, color: C.tm }}>{exp.title || "Expert"}</div></div>{exp.verified_status === "verified" && <span style={{ marginLeft: "auto", fontSize: 10, color: C.grn, background: C.grnBg, padding: "2px 6px", borderRadius: 10, fontWeight: 600 }}>✓ Verified</span>}</div>}
               <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 12, color: C.tm }}><span>📚 {a.sales_count || 0} enrolled</span><span>🏅 Endorsable</span></div>
@@ -318,7 +318,7 @@ function Marketplace({ go, user, data }: any) {
   );
 }
 
-function AssignmentDetail({ id, go, user, toast, data, refresh }: any) {
+function AssignmentDetail({ id, go, user, toast, data, refresh, handleBuy }: any) {
   const a = data.assignments.find((x: any) => x.id === id);
   const exp = a ? data.users.find((u: any) => u.id === a.expert_id) : null;
   const [tab, setTab] = useState("overview"); const [buying, setBuying] = useState(false);
@@ -342,10 +342,10 @@ function AssignmentDetail({ id, go, user, toast, data, refresh }: any) {
         <div>
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}><DTag domain={a.domain} /><Tag color={dc}>{a.difficulty}</Tag><Tag color={C.tm}>~{a.hours}h</Tag><Tag color={C.tm}>{a.role_type}</Tag></div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.tp, margin: "0 0 12px", lineHeight: 1.3 }}>{a.title}</h1>
-          <p style={{ color: C.ts, fontSize: 15, lineHeight: 1.6, margin: "0 0 24px" }}>{a.short_desc}</p>
+          <p style={{ color: C.ts, fontSize: 15, lineHeight: 1.6, margin: "0 0 24px", wordBreak: "break-word", overflowWrap: "anywhere" }}>{a.short_desc}</p>
           <Tabs tabs={[{ id: "overview", label: "Overview" }, { id: "requirements", label: "Requirements" }, { id: "evaluation", label: "Rubric" }, { id: "expert", label: "Expert" }]} active={tab} onChange={setTab} />
           {tab === "overview" && <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Card style={{ borderLeft: `3px solid ${C.acc}` }}><div style={{ fontSize: 11, fontWeight: 600, color: C.acc, letterSpacing: 1, marginBottom: 8 }}>BUSINESS SCENARIO</div><p style={{ color: C.tp, fontSize: 15, lineHeight: 1.75, margin: 0 }}>{a.scenario}</p></Card>
+            <Card style={{ borderLeft: `3px solid ${C.acc}` }}><div style={{ fontSize: 11, fontWeight: 600, color: C.acc, letterSpacing: 1, marginBottom: 8 }}>BUSINESS SCENARIO</div><p style={{ color: C.tp, fontSize: 15, lineHeight: 1.75, margin: 0, wordBreak: "break-word", overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>{a.scenario}</p></Card>
             {a.skills?.length > 0 && <Card><div style={{ fontSize: 11, fontWeight: 600, color: C.ts, letterSpacing: 1, marginBottom: 10 }}>SKILLS YOU&apos;LL DEMONSTRATE</div><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{a.skills.map((s: string) => <Tag key={s} color={C.acc}>{s}</Tag>)}</div></Card>}
           </div>}
           {tab === "requirements" && <Card>{!a.requirements?.length ? <div style={{ color: C.tm }}>No requirements listed.</div> : a.requirements.map((r: string, i: number) => <div key={i} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: i < a.requirements.length - 1 ? `1px solid ${C.bd}` : "none" }}><div style={{ width: 22, height: 22, borderRadius: "50%", background: C.accBg, color: C.acc, fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div><span style={{ fontSize: 14, color: C.tp, lineHeight: 1.5 }}>{r}</span></div>)}</Card>}
@@ -355,7 +355,7 @@ function AssignmentDetail({ id, go, user, toast, data, refresh }: any) {
         <div style={{ position: "sticky", top: 80 }}>
           <Card style={{ border: `1px solid ${C.acc}44` }}>
             <div style={{ textAlign: "center", marginBottom: 20 }}><div style={{ fontSize: 38, fontWeight: 800, color: C.tp }}>${a.price}</div><div style={{ color: C.tm, fontSize: 13 }}>One-time purchase</div></div>
-            {purchased ? <div style={{ display: "flex", flexDirection: "column", gap: 8 }}><div style={{ background: C.grnBg, border: `1px solid ${C.grn}44`, borderRadius: 8, padding: 12, textAlign: "center", fontSize: 13, color: C.grn, fontWeight: 600 }}>✓ You own this</div><Btn full v="success" onClick={() => go("workspace:" + a.id)}>Enter workspace →</Btn></div> : <Btn full onClick={buy} disabled={buying}>{buying ? "Processing..." : "Buy — $" + a.price}</Btn>}
+            {purchased ? <div style={{ display: "flex", flexDirection: "column", gap: 8 }}><div style={{ background: C.grnBg, border: `1px solid ${C.grn}44`, borderRadius: 8, padding: 12, textAlign: "center", fontSize: 13, color: C.grn, fontWeight: 600 }}>✓ You own this</div><Btn full v="success" onClick={() => go("workspace:" + a.id)}>Enter workspace →</Btn></div> : <Btn full onClick={() => handleBuy(a)}>Buy — ${a.price}</Btn>}
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 6 }}>{["Full workspace access", "Requirements checklist", "Expert reviews submission", "Endorsement if score ≥ 75", "Revision requests supported"].map(f => <div key={f} style={{ fontSize: 12, color: C.ts, display: "flex", gap: 8 }}><span style={{ color: C.grn }}>✓</span>{f}</div>)}</div>
           </Card>
         </div>
@@ -724,16 +724,116 @@ function Dashboard({ user, setUser, go, data, loading, refresh, toast }: any) {
 }
 
 // ─── ROOT APP ────────────────────────────────────────────────────────────────
+
+// ─── PAYMENT MODAL ───────────────────────────────────────────────────────────
+function PaymentModal({ assignment, onSuccess, onClose }: any) {
+  const [step, setStep] = useState<"form"|"processing"|"done">("form");
+  const [card, setCard] = useState(""); const [expiry, setExpiry] = useState(""); const [cvc, setCvc] = useState(""); const [name, setName] = useState("");
+  const [err, setErr] = useState("");
+
+  const formatCard = (v: string) => v.replace(/\D/g,"").slice(0,16).replace(/(.{4})/g,"$1 ").trim();
+  const formatExpiry = (v: string) => { const d=v.replace(/\D/g,"").slice(0,4); return d.length>2?d.slice(0,2)+"/"+d.slice(2):d; };
+
+  const pay = () => {
+    const rawCard = card.replace(/\s/g,"");
+    if (!name.trim()) { setErr("Cardholder name is required."); return; }
+    if (rawCard.length < 16) { setErr("Enter a valid 16-digit card number."); return; }
+    if (expiry.length < 5) { setErr("Enter a valid expiry date."); return; }
+    if (cvc.length < 3) { setErr("Enter a valid CVC."); return; }
+    setErr(""); setStep("processing");
+    setTimeout(() => { setStep("done"); setTimeout(onSuccess, 1200); }, 2000);
+  };
+
+  return (
+    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20 }}>
+      <div style={{ ...card0(),width:"100%",maxWidth:420,padding:28,animation:"fadeIn 0.2s ease" }}>
+        {step === "form" && <>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24 }}>
+            <div>
+              <h2 style={{ margin:0,fontSize:18,fontWeight:700,color:C.tp }}>Complete purchase</h2>
+              <div style={{ fontSize:13,color:C.ts,marginTop:2 }}>{assignment.title}</div>
+            </div>
+            <button onClick={onClose} style={{ background:"none",border:"none",cursor:"pointer",color:C.tm,fontSize:24,lineHeight:1 }}>×</button>
+          </div>
+
+          {/* Amount */}
+          <div style={{ background:"#080d18",borderRadius:10,padding:"14px 16px",marginBottom:20,display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+            <span style={{ color:C.ts,fontSize:14 }}>Total due</span>
+            <span style={{ fontSize:24,fontWeight:800,color:C.tp }}>${assignment.price}</span>
+          </div>
+
+          {err && <div style={{ background:C.redBg,border:`1px solid ${C.red}44`,borderRadius:8,padding:"10px 14px",color:C.red,fontSize:13,marginBottom:14 }}>{err}</div>}
+
+          <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+            <Field label="Cardholder name" value={name} onChange={setName} placeholder="Name on card" />
+            <div>
+              <label style={{ fontSize:13,fontWeight:500,color:C.ts,display:"block",marginBottom:5 }}>Card number</label>
+              <input value={card} onChange={e=>setCard(formatCard(e.target.value))} placeholder="1234 5678 9012 3456" maxLength={19}
+                style={{ width:"100%",boxSizing:"border-box",padding:"10px 14px",background:"#080d18",border:`1px solid ${C.bd}`,borderRadius:8,color:C.tp,fontSize:14,outline:"none",fontFamily:"monospace",letterSpacing:1 }}
+                onFocus={e=>e.target.style.borderColor=C.acc} onBlur={e=>e.target.style.borderColor=C.bd} />
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+              <div>
+                <label style={{ fontSize:13,fontWeight:500,color:C.ts,display:"block",marginBottom:5 }}>Expiry</label>
+                <input value={expiry} onChange={e=>setExpiry(formatExpiry(e.target.value))} placeholder="MM/YY" maxLength={5}
+                  style={{ width:"100%",boxSizing:"border-box",padding:"10px 14px",background:"#080d18",border:`1px solid ${C.bd}`,borderRadius:8,color:C.tp,fontSize:14,outline:"none" }}
+                  onFocus={e=>e.target.style.borderColor=C.acc} onBlur={e=>e.target.style.borderColor=C.bd} />
+              </div>
+              <div>
+                <label style={{ fontSize:13,fontWeight:500,color:C.ts,display:"block",marginBottom:5 }}>CVC</label>
+                <input value={cvc} onChange={e=>setCvc(e.target.value.replace(/\D/g,"").slice(0,3))} placeholder="123" maxLength={3}
+                  style={{ width:"100%",boxSizing:"border-box",padding:"10px 14px",background:"#080d18",border:`1px solid ${C.bd}`,borderRadius:8,color:C.tp,fontSize:14,outline:"none" }}
+                  onFocus={e=>e.target.style.borderColor=C.acc} onBlur={e=>e.target.style.borderColor=C.bd} />
+              </div>
+            </div>
+          </div>
+
+          <Btn full onClick={pay} style={{ marginTop:20,padding:"13px",fontSize:15,background:"linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+            Pay ${assignment.price} →
+          </Btn>
+          <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:12,fontSize:12,color:C.tm }}>
+            <span>🔒</span> Secured by Devex Pay · Encrypted
+          </div>
+        </>}
+
+        {step === "processing" && (
+          <div style={{ textAlign:"center",padding:"40px 20px" }}>
+            <div style={{ width:48,height:48,border:`3px solid ${C.bd}`,borderTop:`3px solid ${C.acc}`,borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 20px" }}/>
+            <div style={{ fontSize:16,fontWeight:700,color:C.tp,marginBottom:6 }}>Processing payment...</div>
+            <div style={{ fontSize:13,color:C.ts }}>Please wait, do not close this window.</div>
+          </div>
+        )}
+
+        {step === "done" && (
+          <div style={{ textAlign:"center",padding:"32px 20px" }}>
+            <div style={{ fontSize:52,marginBottom:14 }}>✅</div>
+            <div style={{ fontSize:18,fontWeight:700,color:C.tp,marginBottom:6 }}>Payment successful!</div>
+            <div style={{ fontSize:13,color:C.ts }}>Redirecting to your workspace...</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT APP ────────────────────────────────────────────────────────────────
 export default function Home() {
   const [page, setPage] = useState("landing");
   const [user, setUser] = useState<any>(null);
   const [userLoading, setUserLoading] = useState(true);
   const [toast, setToast] = useState<any>(null);
   const { data, loading, refresh } = useData();
+  const [payModal, setPayModal] = useState<any>(null);
 
-  // Check session via httpOnly cookie (no localStorage)
+  // Restore session from httpOnly cookie on every page load / refresh
   useEffect(() => {
-    api.me().then(({ user: u }) => { setUser(u); setUserLoading(false); }).catch(() => setUserLoading(false));
+    api.me().then(({ user: u }) => {
+      if (u) {
+        setUser(u);
+        setPage("dashboard");
+      }
+      setUserLoading(false);
+    }).catch(() => setUserLoading(false));
   }, []);
 
   const showToast = (msg: string, type = "success") => setToast({ msg, type, key: Date.now() });
@@ -745,6 +845,22 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, [user]);
 
+  // Intercept buy flow to show payment modal
+  const handleBuy = useCallback(async (assignment: any) => {
+    if (!user) { setPage("login"); return; }
+    if (user.role !== "learner") { showToast("Only learners can purchase assignments.", "error"); return; }
+    setPayModal(assignment);
+  }, [user]);
+
+  const completePurchase = useCallback(async (assignment: any) => {
+    setPayModal(null);
+    const res = await api.createPurchase({ assignment_id: assignment.id, price: assignment.price, expert_id: assignment.expert_id, title: assignment.title, current_sales: assignment.sales_count });
+    if (res.error) { showToast("Purchase failed: " + res.error, "error"); return; }
+    await refresh();
+    showToast("Purchase successful! Entering workspace...", "success");
+    setPage("workspace:" + assignment.id);
+  }, [refresh]);
+
   const shell = (content: any) => <Shell user={user} go={go} page={page}>{content}</Shell>;
   const pid = page.includes(":") ? page.split(":")[1] : null;
 
@@ -755,11 +871,11 @@ export default function Home() {
   else if (page === "login") view = <Login go={go} setUser={setUser} toast={showToast} />;
   else if (page === "register") view = <Register go={go} setUser={setUser} toast={showToast} />;
   else if (page === "dashboard") view = user ? <Dashboard user={user} setUser={setUser} go={go} data={data} loading={loading} refresh={refresh} toast={showToast} /> : <Login go={go} setUser={setUser} toast={showToast} />;
-  else if (page === "marketplace") view = shell(<Marketplace go={go} user={user} data={data} />);
+  else if (page === "marketplace") view = shell(<Marketplace go={go} user={user} data={data} handleBuy={handleBuy} />);
   else if (page === "experts") view = shell(<ExpertsPage data={data} />);
   else if (page === "learners") view = shell(<LearnersPage go={go} data={data} />);
   else if (page === "create-assignment") view = user ? shell(<CreateAssignment user={user} go={go} toast={showToast} refresh={refresh} />) : <Login go={go} setUser={setUser} toast={showToast} />;
-  else if (page.startsWith("assignment:")) view = shell(<AssignmentDetail id={pid} go={go} user={user} toast={showToast} data={data} refresh={refresh} />);
+  else if (page.startsWith("assignment:")) view = shell(<AssignmentDetail id={pid} go={go} user={user} toast={showToast} data={data} refresh={refresh} handleBuy={handleBuy} />);
   else if (page.startsWith("workspace:")) view = <Workspace assignmentId={pid} user={user} go={go} toast={showToast} data={data} refresh={refresh} />;
   else if (page.startsWith("learner:")) view = shell(<LearnerProfile id={pid} go={go} data={data} />);
   else view = <Landing go={go} />;
@@ -767,6 +883,7 @@ export default function Home() {
   return (
     <>
       {view}
+      {payModal && <PaymentModal assignment={payModal} onSuccess={() => completePurchase(payModal)} onClose={() => setPayModal(null)} />}
       {toast && <Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
     </>
   );
