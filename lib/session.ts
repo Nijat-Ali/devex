@@ -1,9 +1,8 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(
-  process.env.SESSION_SECRET || "devex-fallback-secret-change-in-prod"
-);
+const SESSION_SECRET = "devex-prod-session-secret-key-2025-secure";
+const secret = new TextEncoder().encode(SESSION_SECRET);
 
 export interface SessionUser {
   id: string;
