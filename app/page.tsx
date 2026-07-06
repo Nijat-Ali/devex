@@ -98,7 +98,7 @@ function NotifBell({ userId }: any) {
       <button onClick={async () => { setOpen(o => !o); if (!open && unread > 0) { await api.markNotifsRead(); setNotifs(p => p.map(n => ({ ...n, read: true }))); } }} style={{ background: "none", border: `1px solid ${C.bd}`, borderRadius: 8, padding: "7px 10px", cursor: "pointer", color: C.ts, fontSize: 15, position: "relative" }}>
         🔔{unread > 0 && <span style={{ position: "absolute", top: 3, right: 3, width: 7, height: 7, borderRadius: "50%", background: C.red }} />}
       </button>
-      {open && <div style={{ position: "fixed", left: 210, bottom: 80, width: 320, ...card0(), zIndex: 500, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
+      {open && <div style={{ position: "fixed", left: 208, bottom: 80, width: 300, ...card0(), zIndex: 500, maxHeight: "60vh", overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.8)", border: `1px solid ${C.acc}44` }}>
         <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd}`, fontSize: 13, fontWeight: 600, color: C.tp }}>Notifications</div>
         {notifs.length === 0 ? <div style={{ padding: "20px 16px", textAlign: "center", color: C.tm, fontSize: 13 }}>No notifications yet</div>
           : notifs.slice(0, 10).map((n: any) => <div key={n.id} style={{ padding: "11px 16px", borderBottom: `1px solid ${C.bd}`, background: n.read ? "transparent" : C.accBg }}>
@@ -294,7 +294,7 @@ function Marketplace({ go, user, data }: any) {
   return (
     <div>
       <div style={{ marginBottom: 24 }}><h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 6px", color: C.tp }}>Assignment marketplace</h1><p style={{ color: C.ts, margin: 0 }}>Domain-specific practical assignments created by senior experts</p></div>
-      <div style={{ ...card0(), padding: "14px 18px", marginBottom: 20, display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 12, alignItems: "end" }}>
+      <div style={{ ...card0(), padding: "14px 18px", marginBottom: 20, display: "grid", gridTemplateColumns: "1fr 180px 160px 180px", gap: 12, alignItems: "end" }}>
         <Field value={search} onChange={setSearch} placeholder="Search by title, domain, description..." />
         <Field value={domain} onChange={setDomain} options={[{ value: "", label: "All domains" }, ...DOMAINS.map(d => ({ value: d, label: d }))]} />
         <Field value={diff} onChange={setDiff} options={[{ value: "", label: "All levels" }, ...DIFFICULTIES.map(d => ({ value: d, label: d }))]} />
@@ -302,9 +302,9 @@ function Marketplace({ go, user, data }: any) {
       </div>
       <div style={{ fontSize: 13, color: C.tm, marginBottom: 16 }}>{filtered.length} assignment{filtered.length !== 1 ? "s" : ""} available</div>
       {filtered.length === 0 ? <Empty icon="📋" title={all.length === 0 ? "No assignments yet" : "No results"} body={all.length === 0 ? "Experts haven't published any assignments yet." : "Try different filters."} action={(search || domain || diff || role) ? <Btn v="ghost" onClick={() => { setSearch(""); setDomain(""); setDiff(""); setRole(""); }}>Clear filters</Btn> : null} />
-        : <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+        : <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 16 }}>
           {filtered.map((a: any) => { const exp = data.users.find((u: any) => u.id === a.expert_id); const diffColors: Record<string,string> = { Beginner: C.grn, Junior: "#06b6d4", Intermediate: C.amb, Advanced: C.red }; const dc = diffColors[a.difficulty] || C.ts; return (
-            <Card key={a.id} onClick={() => go("assignment:" + a.id)} style={{ overflow: "hidden" }}>
+            <Card key={a.id} onClick={() => go("assignment:" + a.id)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}><DTag domain={a.domain} /><span style={{ fontWeight: 700, color: C.tp, fontSize: 16 }}>${a.price}</span></div>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: C.tp, margin: "0 0 8px", lineHeight: 1.4, wordBreak: "break-word" }}>{a.title}</h3>
               <p style={{ fontSize: 13, color: C.ts, margin: "0 0 12px", lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>{a.short_desc}</p>
@@ -338,7 +338,7 @@ function AssignmentDetail({ id, go, user, toast, data, refresh, handleBuy }: any
   return (
     <div>
       <button onClick={() => go("marketplace")} style={{ background: "none", border: "none", cursor: "pointer", color: C.ts, fontSize: 13, marginBottom: 20 }}>← Back to marketplace</button>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 28, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 28, alignItems: "start" }}>
         <div>
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}><DTag domain={a.domain} /><Tag color={dc}>{a.difficulty}</Tag><Tag color={C.tm}>~{a.hours}h</Tag><Tag color={C.tm}>{a.role_type}</Tag></div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.tp, margin: "0 0 12px", lineHeight: 1.3 }}>{a.title}</h1>
@@ -554,7 +554,7 @@ function ExpertsPage({ data }: any) {
 function LearnersPage({ go, data }: any) {
   const [search, setSearch] = useState("");
   const learners = data.users.filter((u: any) => u.role === "learner").filter((l: any) => !search || l.name.toLowerCase().includes(search.toLowerCase()) || l.skills?.some((s: string) => s.toLowerCase().includes(search.toLowerCase())));
-  return <div><div style={{ marginBottom: 24 }}><h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 6px", color: C.tp }}>Endorsed talent</h1><p style={{ color: C.ts, margin: 0 }}>Learners with verified expert endorsements</p></div><div style={{ marginBottom: 20, maxWidth: 400 }}><Field value={search} onChange={setSearch} placeholder="Search by name or skill..." /></div>{learners.length === 0 ? <Empty icon="👨‍💻" title="No learners yet" body="Learners appear here once they register." /> : <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>{learners.map((l: any) => { const endr = data.endorsements.filter((e: any) => e.learner_id === l.id); return <Card key={l.id} onClick={() => go("learner:" + l.id)}><div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}><Avi name={l.name} size={44} /><div><div style={{ fontWeight: 700, color: C.tp }}>{l.name}</div><div style={{ fontSize: 12, color: C.ts }}>{l.skills?.slice(0, 2).join(", ") || "—"}</div></div></div>{endr.length > 0 && <div style={{ marginBottom: 8 }}><Tag color={C.grn}>🏅 {endr.length} endorsement{endr.length > 1 ? "s" : ""}</Tag></div>}<div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, paddingTop: 10, borderTop: `1px solid ${C.bd}` }}>{[["Done", data.submissions.filter((s: any) => s.learner_id === l.id && s.status === "endorsed").length], ["Endorsed", endr.length], ["Score", endr.length ? Math.round(endr.reduce((s: number, e: any) => s + e.score, 0) / endr.length) : "—"]].map(([l2, v]: any) => <div key={l2} style={{ textAlign: "center" }}><div style={{ fontSize: 18, fontWeight: 700, color: C.acc }}>{v}</div><div style={{ fontSize: 11, color: C.tm }}>{l2}</div></div>)}</div></Card>; })}</div>}</div>;
+  return <div><div style={{ marginBottom: 24 }}><h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 6px", color: C.tp }}>Endorsed talent</h1><p style={{ color: C.ts, margin: 0 }}>Learners with verified expert endorsements</p></div><div style={{ marginBottom: 20, maxWidth: 400 }}><Field value={search} onChange={setSearch} placeholder="Search by name or skill..." /></div>{learners.length === 0 ? <Empty icon="👨‍💻" title="No learners yet" body="Learners appear here once they register." /> : <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 16 }}>{learners.map((l: any) => { const endr = data.endorsements.filter((e: any) => e.learner_id === l.id); return <Card key={l.id} onClick={() => go("learner:" + l.id)}><div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}><Avi name={l.name} size={44} /><div><div style={{ fontWeight: 700, color: C.tp }}>{l.name}</div><div style={{ fontSize: 12, color: C.ts }}>{l.skills?.slice(0, 2).join(", ") || "—"}</div></div></div>{endr.length > 0 && <div style={{ marginBottom: 8 }}><Tag color={C.grn}>🏅 {endr.length} endorsement{endr.length > 1 ? "s" : ""}</Tag></div>}<div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, paddingTop: 10, borderTop: `1px solid ${C.bd}` }}>{[["Done", data.submissions.filter((s: any) => s.learner_id === l.id && s.status === "endorsed").length], ["Endorsed", endr.length], ["Score", endr.length ? Math.round(endr.reduce((s: number, e: any) => s + e.score, 0) / endr.length) : "—"]].map(([l2, v]: any) => <div key={l2} style={{ textAlign: "center" }}><div style={{ fontSize: 18, fontWeight: 700, color: C.acc }}>{v}</div><div style={{ fontSize: 11, color: C.tm }}>{l2}</div></div>)}</div></Card>; })}</div>}</div>;
 }
 
 function LearnerProfile({ id, go, data }: any) {
@@ -590,7 +590,7 @@ function LearnerDash({ user, go, data }: any) {
         <div><div style={{ color: C.tm, fontSize: 13, marginBottom: 4 }}>Welcome back,</div><h2 style={{ color: C.tp, fontSize: 24, fontWeight: 800, margin: "0 0 4px" }}>{user.name}</h2><div style={{ color: C.ts, fontSize: 13 }}>{user.bio || "Add a bio to complete your profile"}</div></div>
         <Btn onClick={() => go("marketplace")}>Browse assignments</Btn>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>{[["Purchased", purchases.length, C.acc], ["Submitted", subs.length, C.amb], ["Endorsed", endr.length, C.grn], ["Avg score", endr.length ? Math.round(endr.reduce((s: number, e: any) => s + e.score, 0) / endr.length) : "—", "#f97316"]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 14 }}>{[["Purchased", purchases.length, C.acc], ["Submitted", subs.length, C.amb], ["Endorsed", endr.length, C.grn], ["Avg score", endr.length ? Math.round(endr.reduce((s: number, e: any) => s + e.score, 0) / endr.length) : "—", "#f97316"]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
       {purchases.length === 0
         ? <Empty icon="📋" title="No assignments yet" body="Browse the marketplace and buy your first assignment." action={<Btn onClick={() => go("marketplace")}>Browse marketplace →</Btn>} />
         : <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -637,19 +637,43 @@ function ExpertDash({ user, go, data, refresh, toast }: any) {
         <div><div style={{ color: C.tm, fontSize: 13, marginBottom: 4 }}>Expert dashboard</div><h2 style={{ color: C.tp, fontSize: 24, fontWeight: 800, margin: "0 0 4px" }}>{user.name}</h2><div style={{ color: C.ts, fontSize: 13 }}>{user.title}{user.company ? ` · ${user.company}` : ""}</div>{user.verified_status === "pending" && <div style={{ marginTop: 8, fontSize: 13, color: C.amb }}>⚠ Pending verification — ask an admin to approve you.</div>}{user.verified_status === "verified" && <div style={{ marginTop: 8 }}><Tag color={C.grn}>✓ Verified Expert</Tag></div>}</div>
         <Btn onClick={() => go("create-assignment")}>+ Create assignment</Btn>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>{[["Assignments", myA.length, C.acc], ["Sales", sales.length, C.grn], ["Earnings", "$" + earnings.toFixed(0), C.grn], ["Pending", pending.length, C.amb]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
-      {myA.length === 0
-        ? <Empty icon="📋" title="No assignments yet" body="Create your first domain-specific assignment and start earning." action={<Btn onClick={() => go("create-assignment")}>Create your first assignment →</Btn>} />
-        : <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.tp }}>Your assignments</div>
-            {myA.slice(0, 3).map((a: any) => { const aSales = sales.filter((p: any) => p.assignment_id === a.id); return <Card key={a.id} style={{ padding: "14px 18px" }}><div style={{ display: "flex", gap: 12, alignItems: "center" }}><DTag domain={a.domain} /><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 700, color: C.tp, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</div><div style={{ fontSize: 12, color: C.tm, marginTop: 2 }}>📚 {aSales.length} sales · 💰 ${aSales.reduce((s: number, p: any) => s + parseFloat(p.expert_earnings || 0), 0).toFixed(0)} earned</div></div><Tag color={C.grn}>{a.status}</Tag></div></Card>; })}
-            {myA.length > 3 && <button onClick={() => setTab("assignments")} style={{ background: "none", border: "none", cursor: "pointer", color: C.acc, fontSize: 13, textAlign: "left", padding: "4px 0" }}>View all {myA.length} assignments →</button>}
-          </div>
-      }
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 14 }}>{[["Assignments", myA.length, C.acc], ["Sales", sales.length, C.grn], ["Earnings", "$" + earnings.toFixed(0), C.grn], ["Pending", pending.length, C.amb]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.tp }}>Your assignments</div>
+          {myA.length > 0 && <button onClick={() => setTab("assignments")} style={{ background: "none", border: "none", cursor: "pointer", color: C.acc, fontSize: 13 }}>View all →</button>}
+        </div>
+        {myA.length === 0
+          ? <div style={{ ...card0(), padding: 24, textAlign: "center" }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>📋</div>
+              <div style={{ fontWeight: 600, color: C.tp, marginBottom: 6 }}>No assignments yet</div>
+              <div style={{ fontSize: 13, color: C.ts, marginBottom: 14 }}>Create your first domain-specific assignment and start earning.</div>
+              <Btn sz="sm" onClick={() => go("create-assignment")}>Create assignment →</Btn>
+            </div>
+          : myA.slice(0, 3).map((a: any) => {
+              const aSales = sales.filter((p: any) => p.assignment_id === a.id);
+              return (
+                <div key={a.id} style={{ ...card0(), padding: "14px 18px" }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <DTag domain={a.domain} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, color: C.tp, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</div>
+                      <div style={{ fontSize: 12, color: C.tm, marginTop: 3 }}>📚 {aSales.length} sales · 💰 ${aSales.reduce((s: number, p: any) => s + parseFloat(p.expert_earnings || 0), 0).toFixed(0)} earned</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Tag color={C.grn}>{a.status}</Tag>
+                      <Btn sz="sm" v="ghost" onClick={() => go("marketplace")}>View →</Btn>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+        }
+      </div>
       {pending.length > 0 && <Card style={{ borderLeft: `3px solid ${C.amb}` }}><div style={{ fontWeight: 700, color: C.tp, marginBottom: 8 }}>⚠ {pending.length} submission{pending.length > 1 ? "s" : ""} waiting for review</div><Btn sz="sm" v="outline" onClick={() => setTab("reviews")}>Review now →</Btn></Card>}
       {subs.filter((s: any) => s.status === "endorsed").length > 0 && <Card style={{ borderLeft: `3px solid ${C.grn}` }}><div style={{ fontWeight: 700, color: C.tp, marginBottom: 4 }}>🏅 {subs.filter((s: any) => s.status === "endorsed").length} submission{subs.filter((s: any) => s.status === "endorsed").length > 1 ? "s" : ""} endorsed so far</div><div style={{ fontSize: 13, color: C.ts }}>Keep reviewing to grow your reputation on the platform.</div></Card>}
     </div>}
-    {tab === "assignments" && (myA.length === 0 ? <Empty icon="📋" title="No assignments yet" action={<Btn onClick={() => go("create-assignment")}>Create assignment →</Btn>} /> : <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>{myA.map((a: any) => { const aSales = sales.filter((p: any) => p.assignment_id === a.id); return <Card key={a.id}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}><DTag domain={a.domain} /><Tag color={C.grn}>{a.status}</Tag></div><div style={{ fontWeight: 700, color: C.tp, fontSize: 15, marginBottom: 10 }}>{a.title}</div><div style={{ display: "flex", gap: 16, fontSize: 12, color: C.tm }}><span>📚 {aSales.length} sales</span><span>💰 ${aSales.reduce((s: number, p: any) => s + parseFloat(p.expert_earnings || 0), 0).toFixed(0)} earned</span></div></Card>; })}
+    {tab === "assignments" && (myA.length === 0 ? <Empty icon="📋" title="No assignments yet" action={<Btn onClick={() => go("create-assignment")}>Create assignment →</Btn>} /> : <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 16 }}>{myA.map((a: any) => { const aSales = sales.filter((p: any) => p.assignment_id === a.id); return <Card key={a.id}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}><DTag domain={a.domain} /><Tag color={C.grn}>{a.status}</Tag></div><div style={{ fontWeight: 700, color: C.tp, fontSize: 15, marginBottom: 10 }}>{a.title}</div><div style={{ display: "flex", gap: 16, fontSize: 12, color: C.tm }}><span>📚 {aSales.length} sales</span><span>💰 ${aSales.reduce((s: number, p: any) => s + parseFloat(p.expert_earnings || 0), 0).toFixed(0)} earned</span></div></Card>; })}
       <button onClick={() => go("create-assignment")} style={{ border: `2px dashed ${C.bd}`, borderRadius: 12, padding: 20, background: "transparent", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: C.tm }}><span style={{ fontSize: 32 }}>+</span><span style={{ fontSize: 14 }}>Create assignment</span></button>
     </div>)}
     {tab === "reviews" && (subs.length === 0 ? <Empty icon="🔍" title="No submissions yet" body="Submissions appear here once learners submit work." /> : <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>{subs.map((sub: any) => {
@@ -706,7 +730,7 @@ function AdminDash({ data, refresh, toast }: any) {
     <Tabs tabs={[{ id: "overview", label: "Overview" }, { id: "experts", label: "Expert verification" }, { id: "assignments", label: "Assignments" }, { id: "users", label: "Users" }]} active={tab} onChange={setTab} />
     {tab === "overview" && <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ background: "linear-gradient(135deg,#0f1430,#1c0f30)", borderRadius: 14, padding: "24px 28px" }}><div style={{ color: C.tm, fontSize: 13 }}>Admin dashboard</div><h2 style={{ color: C.tp, fontSize: 22, fontWeight: 800, margin: "4px 0 0" }}>Platform overview</h2></div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>{[["Total users", data.users.length, C.acc], ["Published", data.assignments.filter((a: any) => a.status === "published").length, C.grn], ["Submissions", data.submissions.length, C.amb], ["Endorsements", data.endorsements.length, "#f97316"]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 14 }}>{[["Total users", data.users.length, C.acc], ["Published", data.assignments.filter((a: any) => a.status === "published").length, C.grn], ["Submissions", data.submissions.length, C.amb], ["Endorsements", data.endorsements.length, "#f97316"]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
       {pending.length > 0 && <Card style={{ borderLeft: `3px solid ${C.amb}` }}><div style={{ fontWeight: 700, color: C.tp, marginBottom: 8 }}>⚠ {pending.length} expert{pending.length > 1 ? "s" : ""} awaiting verification</div><Btn sz="sm" v="outline" onClick={() => setTab("experts")}>Review applications</Btn></Card>}
     </div>}
     {tab === "experts" && (experts.length === 0 ? <Empty icon="🎓" title="No experts yet" /> : <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{experts.map((e: any) => <Card key={e.id}><div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}><Avi name={e.name} size={44} /><div style={{ flex: 1 }}><div style={{ fontWeight: 700, color: C.tp }}>{e.name}</div><div style={{ fontSize: 13, color: C.ts }}>{e.title}{e.company ? ` · ${e.company}` : ""}{e.years ? ` · ${e.years} yrs` : ""}</div>{e.bio && <div style={{ fontSize: 12, color: C.tm, marginTop: 4, lineHeight: 1.5 }}>{e.bio}</div>}{e.domains?.length > 0 && <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>{e.domains.map((d: string) => <DTag key={d} domain={d} />)}</div>}</div><div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}><Tag color={e.verified_status === "verified" ? C.grn : e.verified_status === "rejected" ? C.red : C.amb}>{e.verified_status}</Tag>{e.verified_status === "pending" && <div style={{ display: "flex", gap: 6 }}><Btn sz="sm" v="success" onClick={() => verify(e.id, "verified")}>Approve ✓</Btn><Btn sz="sm" v="danger" onClick={() => verify(e.id, "rejected")}>Reject</Btn></div>}{e.verified_status === "verified" && <Btn sz="sm" v="ghost" onClick={() => verify(e.id, "pending")}>Revoke</Btn>}</div></div></Card>)}</div>)}

@@ -13,6 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           body { background: #0a0f1e; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #f1f5f9; }
           input, textarea, select, button { font-family: inherit; }
+          * { min-width: 0; }
+          h1, h2, h3, h4, p { overflow-wrap: break-word; word-break: break-word; }
           ::-webkit-scrollbar { width: 6px; height: 6px; }
           ::-webkit-scrollbar-track { background: #0a0f1e; }
           ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
