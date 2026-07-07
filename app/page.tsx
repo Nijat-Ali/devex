@@ -11,6 +11,10 @@ const api = {
   createAssignment: (b: any) => fetch("/api/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then(r => r.json()),
   updateAssignment: (b: any) => fetch("/api/assignments", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then(r => r.json()),
   deleteAssignment: (id: string) => fetch("/api/assignments/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).then(r => r.json()),
+  deleteUser: (id: string) => fetch("/api/users/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).then(r => r.json()),
+  deleteEndorsement: (id: string) => fetch("/api/endorsements/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).then(r => r.json()),
+  deleteSubmission: (id: string) => fetch("/api/submissions/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).then(r => r.json()),
+  deletePurchase: (id: string) => fetch("/api/purchases/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).then(r => r.json()),
   createPurchase: (b: any) => fetch("/api/purchases", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then(r => r.json()),
   createSession: (b: any) => fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then(r => r.json()),
   updateSession: (b: any) => fetch("/api/sessions", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then(r => r.json()),
@@ -1278,11 +1282,23 @@ function ExpertDash({ user, go, data, refresh, toast, t }: any) {
 }
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────────────────────
+function ConfirmRow({ label, onConfirm, onCancel, t }: any) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+      <div style={{ fontSize: 14, color: C.red, fontWeight: 600 }}>{label}</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Btn sz="sm" v="danger" onClick={onConfirm}>Yes, delete</Btn>
+        <Btn sz="sm" v="ghost" onClick={onCancel}>{t.cancel}</Btn>
+      </div>
+    </div>
+  );
+}
+
 function AdminDash({ data, refresh, toast, t }: any) {
   const [tab, setTab] = useState("overview");
   const experts = data.users.filter((u: any) => u.role === "expert");
   const pending = experts.filter((e: any) => e.verified_status === "pending");
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{type: string; id: string} | null>(null);
 
   const verify = async (id: string, status: string) => {
     const res = await api.updateUser({ id, verified_status: status });
@@ -1290,56 +1306,95 @@ function AdminDash({ data, refresh, toast, t }: any) {
     await refresh(); toast("Updated.", "success");
   };
 
-  const deleteAssignment = async (id: string) => {
-    const res = await api.deleteAssignment(id);
-    if (res.error) { toast("Error: " + res.error, "error"); return; }
-    setConfirmDelete(null);
-    await refresh(); toast("Assignment removed.", "success");
+  const del = async (type: string, id: string) => {
+    setConfirm(null);
+    let res: any;
+    if (type === "assignment") res = await api.deleteAssignment(id);
+    else if (type === "user") res = await api.deleteUser(id);
+    else if (type === "endorsement") res = await api.deleteEndorsement(id);
+    else if (type === "submission") res = await api.deleteSubmission(id);
+    else if (type === "purchase") res = await api.deletePurchase(id);
+    if (res?.error) { toast("Error: " + res.error, "error"); return; }
+    await refresh(); toast("Deleted.", "success");
   };
 
-  return <div>
-    <Tabs tabs={[{ id: "overview", label: t.overview }, { id: "experts", label: t.expert_verification }, { id: "assignments", label: t.assignments_label }, { id: "users", label: "Users" }]} active={tab} onChange={setTab} />
+  const isConfirm = (type: string, id: string) => confirm?.type === type && confirm?.id === id;
+  const delBtn = (type: string, id: string) => <Btn sz="sm" v="danger" onClick={() => setConfirm({ type, id })}>{t.remove_assignment}</Btn>;
 
+  return <div>
+    <Tabs tabs={[
+      { id: "overview", label: t.overview },
+      { id: "experts", label: t.expert_verification },
+      { id: "assignments", label: t.assignments_label },
+      { id: "submissions", label: t.submissions },
+      { id: "endorsements", label: t.endorsements },
+      { id: "users", label: "Users" },
+    ]} active={tab} onChange={setTab} />
+
+    {/* ── OVERVIEW ── */}
     {tab === "overview" && <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ background: "linear-gradient(135deg,#0f1430,#1c0f30)", borderRadius: 14, padding: "24px 28px" }}><div style={{ color: C.tm, fontSize: 13 }}>{t.admin_panel}</div><h2 style={{ color: C.tp, fontSize: 22, fontWeight: 800, margin: "4px 0 0" }}>{t.platform_overview}</h2></div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 14 }}>{[[t.total_users, data.users.length, C.acc], [t.published, data.assignments.filter((a: any) => a.status === "published").length, C.grn], [t.submissions, data.submissions.length, C.amb], [t.endorsements, data.endorsements.length, "#f97316"]].map(([l, v, c]: any) => <Card key={l}><div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div><div style={{ fontSize: 12, color: C.tm }}>{l}</div></Card>)}</div>
-      {pending.length > 0 && <div style={{ ...card0(), padding: 18, borderLeft: `3px solid ${C.amb}` }}><div style={{ fontWeight: 700, color: C.tp, marginBottom: 8 }}>⚠ {pending.length} {t.expert_verification} {t.awaiting_verification}</div><Btn sz="sm" v="outline" onClick={() => setTab("experts")}>{t.review_applications}</Btn></div>}
+      <div style={{ background: "linear-gradient(135deg,#0f1430,#1c0f30)", borderRadius: 14, padding: "24px 28px" }}>
+        <div style={{ color: C.tm, fontSize: 13 }}>{t.admin_panel}</div>
+        <h2 style={{ color: C.tp, fontSize: 22, fontWeight: 800, margin: "4px 0 0" }}>{t.platform_overview}</h2>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 14 }}>
+        {[
+          [t.total_users, data.users.length, C.acc, "users"],
+          [t.assignments_label, data.assignments.length, C.grn, "assignments"],
+          [t.submissions, data.submissions.length, C.amb, "submissions"],
+          [t.endorsements, data.endorsements.length, "#f97316", "endorsements"],
+          ["Purchases", data.purchases.length, "#06b6d4", null],
+          [t.expert_verification + " (pending)", pending.length, C.red, "experts"],
+        ].map(([l, v, c, link]: any) => (
+          <Card key={l} onClick={link ? () => setTab(link) : undefined} style={{ cursor: link ? "pointer" : "default" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: c, marginBottom: 4 }}>{v}</div>
+            <div style={{ fontSize: 12, color: C.tm }}>{l}</div>
+            {link && <div style={{ fontSize: 11, color: C.acc, marginTop: 6 }}>Manage →</div>}
+          </Card>
+        ))}
+      </div>
+      {pending.length > 0 && <div style={{ ...card0(), padding: 18, borderLeft: `3px solid ${C.amb}` }}>
+        <div style={{ fontWeight: 700, color: C.tp, marginBottom: 8 }}>⚠ {pending.length} expert{pending.length > 1 ? "s" : ""} {t.awaiting_verification}</div>
+        <Btn sz="sm" v="outline" onClick={() => setTab("experts")}>{t.review_applications}</Btn>
+      </div>}
     </div>}
 
+    {/* ── EXPERTS ── */}
     {tab === "experts" && (experts.length === 0 ? <Empty icon="🎓" title={t.no_experts} /> : <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {experts.map((e: any) => <Card key={e.id}>
-        <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-          <Avi name={e.name} size={48} avatarUrl={e.avatar_url} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: C.tp, fontSize: 15 }}>{e.name}</div>
-            <div style={{ fontSize: 13, color: C.ts }}>{e.email}</div>
-            <div style={{ fontSize: 13, color: C.ts }}>{e.title}{e.company ? ` · ${e.company}` : ""}{e.years ? ` · ${e.years} yrs` : ""}</div>
-            {e.bio && <div style={{ fontSize: 12, color: C.tm, marginTop: 4, lineHeight: 1.5, wordBreak: "break-word" }}>{e.bio}</div>}
-            {e.domains?.length > 0 && <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>{e.domains.map((d: string) => <DTag key={d} domain={d} />)}</div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-              {e.github && <ExtLink href={`https://github.com/${e.github}`}><Tag color={C.tm}>⌨ {e.github}</Tag></ExtLink>}
-              {e.linkedin && <ExtLink href={e.linkedin}><Tag color="#0a66c2">in LinkedIn</Tag></ExtLink>}
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
-            <Tag color={e.verified_status === "verified" ? C.grn : e.verified_status === "rejected" ? C.red : C.amb}>{e.verified_status}</Tag>
-            {e.verified_status === "pending" && <div style={{ display: "flex", gap: 6 }}><Btn sz="sm" v="success" onClick={() => verify(e.id, "verified")}>{t.approve}</Btn><Btn sz="sm" v="danger" onClick={() => verify(e.id, "rejected")}>{t.reject}</Btn></div>}
-            {e.verified_status === "verified" && <Btn sz="sm" v="ghost" onClick={() => verify(e.id, "pending")}>{t.revoke}</Btn>}
-            {e.verified_status === "rejected" && <Btn sz="sm" v="outline" onClick={() => verify(e.id, "verified")}>{t.approve}</Btn>}
-          </div>
-        </div>
+        {isConfirm("user", e.id)
+          ? <ConfirmRow label={`Delete user "${e.name}"? All their data will be removed.`} onConfirm={() => del("user", e.id)} onCancel={() => setConfirm(null)} t={t} />
+          : <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <Avi name={e.name} size={48} avatarUrl={e.avatar_url} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: C.tp, fontSize: 15 }}>{e.name}</div>
+                <div style={{ fontSize: 13, color: C.ts }}>{e.email}</div>
+                <div style={{ fontSize: 13, color: C.ts }}>{e.title}{e.company ? ` · ${e.company}` : ""}{e.years ? ` · ${e.years} yrs` : ""}</div>
+                {e.bio && <div style={{ fontSize: 12, color: C.tm, marginTop: 4, lineHeight: 1.5, wordBreak: "break-word" }}>{e.bio}</div>}
+                {e.domains?.length > 0 && <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>{e.domains.map((d: string) => <DTag key={d} domain={d} />)}</div>}
+                <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                  {e.github && <ExtLink href={`https://github.com/${e.github}`}><Tag color={C.tm}>⌨ {e.github}</Tag></ExtLink>}
+                  {e.linkedin && <ExtLink href={e.linkedin}><Tag color="#0a66c2">in LinkedIn</Tag></ExtLink>}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+                <Tag color={e.verified_status === "verified" ? C.grn : e.verified_status === "rejected" ? C.red : C.amb}>{e.verified_status}</Tag>
+                {e.verified_status === "pending" && <div style={{ display: "flex", gap: 6 }}><Btn sz="sm" v="success" onClick={() => verify(e.id, "verified")}>{t.approve}</Btn><Btn sz="sm" v="danger" onClick={() => verify(e.id, "rejected")}>{t.reject}</Btn></div>}
+                {e.verified_status === "verified" && <Btn sz="sm" v="ghost" onClick={() => verify(e.id, "pending")}>{t.revoke}</Btn>}
+                {e.verified_status === "rejected" && <Btn sz="sm" v="outline" onClick={() => verify(e.id, "verified")}>{t.approve}</Btn>}
+                {delBtn("user", e.id)}
+              </div>
+            </div>}
       </Card>)}
     </div>)}
 
+    {/* ── ASSIGNMENTS ── */}
     {tab === "assignments" && (data.assignments.length === 0 ? <Empty icon="📋" title="No assignments yet" /> : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {data.assignments.map((a: any) => {
         const exp = data.users.find((u: any) => u.id === a.expert_id);
         return <div key={a.id} style={{ ...card0(), padding: "14px 18px" }}>
-          {confirmDelete === a.id
-            ? <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: 14, color: C.red, fontWeight: 600 }}>Delete &quot;{a.title}&quot;? This cannot be undone.</div>
-                <div style={{ display: "flex", gap: 8 }}><Btn sz="sm" v="danger" onClick={() => deleteAssignment(a.id)}>Yes, delete</Btn><Btn sz="sm" v="ghost" onClick={() => setConfirmDelete(null)}>{t.cancel}</Btn></div>
-              </div>
+          {isConfirm("assignment", a.id)
+            ? <ConfirmRow label={`Delete "${a.title}"? Cannot be undone.`} onConfirm={() => del("assignment", a.id)} onCancel={() => setConfirm(null)} t={t} />
             : <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <DTag domain={a.domain} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -1347,14 +1402,75 @@ function AdminDash({ data, refresh, toast, t }: any) {
                   <div style={{ fontSize: 12, color: C.tm, marginTop: 2 }}>by {exp?.name || "?"} · ${a.price} · {a.sales_count || 0} sales</div>
                 </div>
                 <Tag color={a.status === "published" ? C.grn : C.amb}>{a.status}</Tag>
-                <Btn sz="sm" v="danger" onClick={() => setConfirmDelete(a.id)}>{t.remove_assignment}</Btn>
+                {delBtn("assignment", a.id)}
               </div>}
         </div>;
       })}
     </div>)}
 
+    {/* ── SUBMISSIONS ── */}
+    {tab === "submissions" && (data.submissions.length === 0 ? <Empty icon="📤" title="No submissions yet" /> : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {data.submissions.map((s: any) => {
+        const learner = data.users.find((u: any) => u.id === s.learner_id);
+        const assignment = data.assignments.find((a: any) => a.id === s.assignment_id);
+        const sc: any = { pending_review: C.amb, endorsed: C.grn, rejected: C.red, revision_requested: "#f97316" };
+        return <div key={s.id} style={{ ...card0(), padding: "14px 18px" }}>
+          {isConfirm("submission", s.id)
+            ? <ConfirmRow label={`Delete submission by "${learner?.name}"? Reviews and endorsements from this submission will also be removed.`} onConfirm={() => del("submission", s.id)} onCancel={() => setConfirm(null)} t={t} />
+            : <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <Avi name={learner?.name || "?"} size={36} avatarUrl={learner?.avatar_url} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: C.tp, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignment?.title || "Unknown assignment"}</div>
+                  <div style={{ fontSize: 12, color: C.tm, marginTop: 2 }}>by {learner?.name || "?"} · {new Date(s.submitted_at).toLocaleDateString()}</div>
+                  {s.github_repo_url && <ExtLink href={s.github_repo_url} style={{ fontSize: 12, display: "block", marginTop: 2 }}>{s.github_repo_url}</ExtLink>}
+                </div>
+                <Tag color={sc[s.status] || C.ts}>{s.status.replace(/_/g, " ")}</Tag>
+                {delBtn("submission", s.id)}
+              </div>}
+        </div>;
+      })}
+    </div>)}
+
+    {/* ── ENDORSEMENTS ── */}
+    {tab === "endorsements" && (data.endorsements.length === 0 ? <Empty icon="🏅" title="No endorsements yet" /> : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {data.endorsements.map((e: any) => {
+        const learner = data.users.find((u: any) => u.id === e.learner_id);
+        const expert = data.users.find((u: any) => u.id === e.expert_id);
+        const assignment = data.assignments.find((a: any) => a.id === e.assignment_id);
+        return <div key={e.id} style={{ ...card0(), padding: "14px 18px" }}>
+          {isConfirm("endorsement", e.id)
+            ? <ConfirmRow label={`Remove endorsement of "${learner?.name}" by "${expert?.name}"?`} onConfirm={() => del("endorsement", e.id)} onCancel={() => setConfirm(null)} t={t} />
+            : <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div style={{ fontSize: 24 }}>🏅</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: C.tp, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{assignment?.title || "Unknown assignment"}</div>
+                  <div style={{ fontSize: 12, color: C.tm, marginTop: 2 }}>
+                    <span style={{ color: C.grn }}>{learner?.name || "?"}</span> endorsed by <span style={{ color: C.acc }}>{expert?.name || "?"}</span>
+                  </div>
+                  {e.text && <div style={{ fontSize: 12, color: C.ts, marginTop: 4, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>&quot;{e.text}&quot;</div>}
+                </div>
+                <Score v={e.score} />
+                {delBtn("endorsement", e.id)}
+              </div>}
+        </div>;
+      })}
+    </div>)}
+
+    {/* ── USERS ── */}
     {tab === "users" && (data.users.length === 0 ? <Empty icon="👥" title="No users yet" /> : <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {data.users.map((u: any) => <div key={u.id} style={{ ...card0(), padding: "13px 18px" }}><div style={{ display: "flex", gap: 12, alignItems: "center" }}><Avi name={u.name} size={36} avatarUrl={u.avatar_url} /><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 600, color: C.tp }}>{u.name}</div><div style={{ fontSize: 12, color: C.tm, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email} · Joined {new Date(u.created_at).toLocaleDateString()}</div></div><Tag color={u.role === "expert" ? C.acc : u.role === "admin" ? C.red : C.ts}>{u.role}</Tag></div></div>)}
+      {data.users.filter((u: any) => u.role !== "admin").map((u: any) => <div key={u.id} style={{ ...card0(), padding: "13px 18px" }}>
+        {isConfirm("user", u.id)
+          ? <ConfirmRow label={`Delete user "${u.name}" (${u.role})? All their data will be removed.`} onConfirm={() => del("user", u.id)} onCancel={() => setConfirm(null)} t={t} />
+          : <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <Avi name={u.name} size={36} avatarUrl={u.avatar_url} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, color: C.tp }}>{u.name}</div>
+                <div style={{ fontSize: 12, color: C.tm, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email} · Joined {new Date(u.created_at).toLocaleDateString()}</div>
+              </div>
+              <Tag color={u.role === "expert" ? C.acc : u.role === "recruiter" ? C.amb : C.ts}>{u.role}</Tag>
+              {delBtn("user", u.id)}
+            </div>}
+      </div>)}
     </div>)}
   </div>;
 }
